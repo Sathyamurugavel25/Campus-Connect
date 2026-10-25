@@ -1,0 +1,12 @@
+import axios from'axios';import{io}from'socket.io-client';
+export const API=import.meta.env.VITE_API||'http://localhost:5000/api';
+export const FILES=API.replace('/api','');
+const api=axios.create({baseURL:API});
+api.interceptors.request.use(c=>{const t=localStorage.getItem('cc_token');if(t)c.headers.Authorization='Bearer '+t;return c});
+api.interceptors.response.use(r=>r,e=>{if(e.response?.status===401&&!location.pathname.startsWith('/login')){localStorage.removeItem('cc_token');location.href='/login'}return Promise.reject(e)});
+let sock;
+export const startLive=()=>{sock?.disconnect();sock=io(FILES,{auth:{token:localStorage.getItem('cc_token')}})};
+export const stopLive=()=>{sock?.disconnect();sock=null};
+export const live=(ev,fn)=>{sock?.on(ev,fn);return()=>sock?.off(ev,fn)};
+export const err=e=>e.response?.data?.message||e.message;
+export default api;
